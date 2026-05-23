@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-# minewalker
 Minesweeper but make it Wumpus-themed
 =======
 ## Getting Started
