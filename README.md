@@ -1,21 +1,28 @@
-Minesweeper but make it Wumpus-themed
-=======
-## Getting Started
+Minewalker
+==========
 
-Welcome to the VS Code Java world. Here is a guideline to help you get started to write Java code in Visual Studio Code.
+## Introduction
 
-## Folder Structure
+Minewalker merupakan sebuah game tile-based yang terinsiprasi dari game klasik Minesweeper, namun berorientasi pada player. Player memilih untuk spawn pada tile berukuran $M \times N$ dan harus mengelilingi seluruh tile yang aman tanpa menginjak tile bom.
 
-The workspace contains two folders by default, where:
+## Contributors
 
-- `src`: the folder to maintain sources
-- `lib`: the folder to maintain dependencies
+1. Haydar Rafi' Sultansyah (24060124120023)
+2. Imam Alfarezel (24060124120028)
+3. Agil Yudis Wibawa (24060124120045)
+4. Maulana Ghazzam Adil Al Faiq (24060124130083)
+5. Marco Falias Pangkado (24060124130112)
 
-Meanwhile, the compiled output files will be generated in the `bin` folder by default.
+## Controls
 
-> If you want to customize the folder structure, open `.vscode/settings.json` and update the related settings there.
+- Menus: `W/S` atau `Up/Down` untuk memilih menu, `Enter` atau `Space` untuk konfirmasi.
+- Gameplay Configuration: `W/S` atau `Up/Down` untuk memilih , `A/D` atau `Left/Right` untuk mengatur value.
+- Tile [S]: `WASD` atau tombol arah pada keyboard untuk menentukan titik spawn, lalu `Enter` atau `Space`.
+- Gameplay: `WASD` atau tombol arah untuk bergerak.
+- Flag: tekan `F`, lalu `WASD` atau tombol arah untuk menaruh flag
+- Pause: `Esc`, lalu `W/S` atau `Up/Down`, dan `Enter` atau `Space` untuk konfirmasi.
+- Gameplay Finished: `Space` untuk memulai kembali, `Esc` untuk kembali ke menu.
 
-## Dependency Management
+## Prinsip-Prinsip PBO yang diterapkan
 
-The `JAVA PROJECTS` view allows you to manage your dependencies. More details can be found [here](https://github.com/microsoft/vscode-java-dependency#manage-dependencies).
->>>>>>> master
+Coming soon
