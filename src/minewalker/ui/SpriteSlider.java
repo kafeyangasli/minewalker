@@ -1,15 +1,24 @@
 package minewalker.ui;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 
+import javax.swing.JSlider;
+
 class SpriteSlider extends JSlider {
    private static final long serialVersionUID = 1L;
    private static final int HORIZONTAL_PADDING = 0 ;
-   private static final int VERTICAL_PADDING = 0;
+   private static final int TRACK_HEIGHT = 31;
+   private static final int LABEL_AREA_HEIGHT = 24;
    private final TextureManager textures = TextureManager.get();
 
    SpriteSlider(int min, int max, int value) {
@@ -20,6 +29,8 @@ class SpriteSlider extends JSlider {
       setPaintTicks(false);
       setPaintLabels(false);
       setBorder(null);
+      setFont(ScreenStyles.pixelFont(Font.PLAIN, 12));
+      setPreferredSize(new Dimension(240, TRACK_HEIGHT + LABEL_AREA_HEIGHT));
 
       MouseAdapter mouseHandler = new MouseAdapter() {
          @Override
@@ -58,11 +69,15 @@ class SpriteSlider extends JSlider {
    }
 
    private int getTrackHeight() {
-      return Math.max(15, getHeight() - VERTICAL_PADDING * 2);
+      int labelSpace = getPaintLabels() || getPaintTicks() ? LABEL_AREA_HEIGHT : 0;
+      int availableHeight = Math.max(15, getHeight() - labelSpace);
+      return Math.min(TRACK_HEIGHT, availableHeight);
    }
 
    private int getTrackY() {
-      return (getHeight() - getTrackHeight()) / 2;
+      int labelSpace = getPaintLabels() || getPaintTicks() ? LABEL_AREA_HEIGHT : 0;
+      int drawableHeight = Math.max(15, getHeight() - labelSpace);
+      return Math.max(0, (drawableHeight - getTrackHeight()) / 2);
    }
 
    private int getThumbCenterX() {
@@ -95,6 +110,7 @@ class SpriteSlider extends JSlider {
 
       paintSpriteTrack(g);
       paintSpritePointer(g);
+      paintTicksAndLabels(g);
 
       g.dispose();
    }
@@ -155,5 +171,42 @@ class SpriteSlider extends JSlider {
          g.setColor(ScreenStyles.ACCENT);
          g.fillOval(x, y, pointerW, pointerH);
       }
+   }
+
+   private void paintTicksAndLabels(Graphics2D g) {
+      if (!getPaintTicks() && !getPaintLabels()) {
+         return;
+      }
+
+      g.setFont(getFont().deriveFont(Font.BOLD, 11f));
+      g.setColor(getForeground());
+      FontMetrics metrics = g.getFontMetrics();
+      int tickTop = getTrackY() + getTrackHeight() + 2;
+      int labelBaseline = tickTop + 6 + metrics.getAscent();
+      int spacing = getMajorTickSpacing() > 0 ? getMajorTickSpacing() : getMaximum() - getMinimum();
+
+      for (int value = getMinimum(); value <= getMaximum(); value += spacing) {
+         drawTickAndLabel(g, metrics, value, tickTop, labelBaseline);
+      }
+      if ((getMaximum() - getMinimum()) % spacing != 0) {
+         drawTickAndLabel(g, metrics, getMaximum(), tickTop, labelBaseline);
+      }
+   }
+
+   private void drawTickAndLabel(Graphics2D g, FontMetrics metrics, int value, int tickTop, int labelBaseline) {
+      int x = xForValue(value);
+      if (getPaintTicks()) {
+         g.drawLine(x, tickTop, x, tickTop + 5);
+      }
+      if (getPaintLabels()) {
+         String text = Integer.toString(value);
+         int textWidth = metrics.stringWidth(text);
+         g.drawString(text, x - textWidth / 2, labelBaseline);
+      }
+   }
+
+   private int xForValue(int value) {
+      double ratio = (value - getMinimum()) / (double) (getMaximum() - getMinimum());
+      return getTrackStart() + (int) Math.round(ratio * getTrackWidth());
    }
 }

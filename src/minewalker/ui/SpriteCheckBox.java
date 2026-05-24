@@ -1,6 +1,7 @@
 package minewalker.ui;
 
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -16,6 +17,8 @@ class SpriteCheckBox extends JCheckBox {
     SpriteCheckBox(String text, boolean selected) {
         super(text, selected);
         setOpaque(false);
+        setIcon(null);
+        setSelectedIcon(null);
         setIconTextGap(12);
         setFont(ScreenStyles.pixelFont(Font.PLAIN, 18));
     }
@@ -26,9 +29,13 @@ class SpriteCheckBox extends JCheckBox {
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
         Image box = isSelected() ? textures.checkboxChecked() : textures.checkboxEmpty();
         if (box != null) {
-            g.drawImage(box, 0, (getHeight() - BOX_SIZE) / 2, BOX_SIZE, BOX_SIZE, null);
-            g.translate(BOX_SIZE + getIconTextGap(), 0);
-            super.paintComponent(g);
+            int boxY = (getHeight() - BOX_SIZE) / 2;
+            g.drawImage(box, 0, boxY, BOX_SIZE, BOX_SIZE, null);
+            g.setFont(getFont());
+            g.setColor(getForeground());
+            FontMetrics metrics = g.getFontMetrics();
+            int textY = (getHeight() - metrics.getHeight()) / 2 + metrics.getAscent();
+            g.drawString(getText(), BOX_SIZE + getIconTextGap(), textY);
         } else {
             super.paintComponent(g);
         }

@@ -21,6 +21,7 @@ import java.util.function.Consumer;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JLayeredPane;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -39,8 +40,9 @@ import minewalker.model.SafeTile;
 import minewalker.model.Tile;
 
 public class GamePanel extends JPanel {
+    private static final long serialVersionUID = 1L;
     private static final int MAX_TILE_SIZE = 48;
-    private static final int MIN_TILE_SIZE = 20;
+    private static final int MIN_TILE_SIZE = 12;
 
     private final GameSettings settings;
     private Minefield minefield;
@@ -57,6 +59,7 @@ public class GamePanel extends JPanel {
     private final TextureManager textures = TextureManager.get();
     private final Timer timer;
     private int elapsedSeconds;
+    private int remainingSeconds;
     private boolean waitingForFlagDirection;
     private boolean paused;
     private boolean selectingSpawn = true;
@@ -70,9 +73,9 @@ public class GamePanel extends JPanel {
         this.settings = settings;
         this.recordResult = recordResult;
         this.musicManager = musicManager;
-        this.resultOverlay = new ResultOverlay(playAgain, menu, musicManager);
+        this.resultOverlay = new ResultOverlay(playAgain, menu);
         this.pauseOverlay = new PauseOverlay(this::resumeGame, menu);
-        this.titleLabel = new JLabel("walk " + settings.getRows() + "x" + settings.getColumns(), SwingConstants.CENTER);
+        this.titleLabel = new JLabel(settings.getRows() + "x" + settings.getColumns() + " map", SwingConstants.CENTER);
         this.spawnCursor = new Position(settings.getColumns() / 2, settings.getRows() / 2);
         this.timer = new Timer(1000, this::tick);
 
@@ -82,6 +85,7 @@ public class GamePanel extends JPanel {
 
         JPanel top = new JPanel(new GridLayout(1, 3));
         top.setOpaque(false);
+        top.setBorder(BorderFactory.createEmptyBorder(0, 0, 32, 0));
         status.setForeground(ScreenStyles.WHITE);
         status.setFont(ScreenStyles.pixelFont(Font.BOLD, 18));
         titleLabel.setForeground(ScreenStyles.ACCENT);
@@ -107,7 +111,8 @@ public class GamePanel extends JPanel {
         refreshSpawnSelection();
 
         if (settings.isTimerEnabled()) {
-            timerLabel.setText("Time: 0s");
+            remainingSeconds = settings.getTimerLimitSeconds();
+            timerLabel.setText("Left: " + formatTime(remainingSeconds));
         } else {
             timerLabel.setText("Timer: off");
         }
@@ -143,7 +148,7 @@ public class GamePanel extends JPanel {
         bind("LEFT", Direction.LEFT);
         bind("D", Direction.RIGHT);
         bind("RIGHT", Direction.RIGHT);
-        board.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("F"), "flag");
+        board.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(settings.getFlagKey()), "flag");
         board.getActionMap().put("flag", new AbstractAction() {
             private static final long serialVersionUID = 1L;
 
@@ -155,7 +160,7 @@ public class GamePanel extends JPanel {
                 waitingForFlagDirection = !waitingForFlagDirection;
                 musicManager.playEffect("select");
                 if (waitingForFlagDirection) {
-                    status.setText("Flag mode: choose a direction");
+                    status.setText("Flag: Pilih tempat menaruh flag");
                 } else {
                     refreshBoard();
                 }
@@ -294,12 +299,10 @@ public class GamePanel extends JPanel {
                 label.setSprite(spriteFor(tile));
                 label.setOverlaySprite(playerHere ? playerSprite() : null);
                 label.setBackground(tile.getDisplayColor(playerHere));
-                label.setForeground(textColorFor(tile, playerHere));
                 label.setText(displayTextFor(tile, playerHere));
             }
         }
-        status.setText("Explored: " + minefield.getDiscoveredSafeTiles() + "/" + minefield.getTotalSafeTiles()
-                + " safe tiles");
+        status.setText(minefield.getDiscoveredSafeTiles() + "/" + minefield.getTotalSafeTiles() + " safe tiles");
     }
 
     private void refreshSpawnSelection() {
@@ -310,12 +313,9 @@ public class GamePanel extends JPanel {
                 boolean cursorHere = position.equals(spawnCursor);
                 label.setSprite(textures.hiddenTile());
                 label.setOverlaySprite(cursorHere ? textures.player("spawn") : null);
-                label.setBackground(cursorHere ? ScreenStyles.PLAYER : ScreenStyles.BLACK);
-                label.setForeground(cursorHere ? ScreenStyles.BLACK : ScreenStyles.WHITE);
-                label.setText(cursorHere ? "S" : "");
             }
         }
-        status.setText("Choose spawn");
+        status.setText("Pilih tempat spawn");
     }
 
     private void moveSpawnCursor(Direction direction) {
@@ -333,7 +333,9 @@ public class GamePanel extends JPanel {
         selectingSpawn = false;
         minefield = new Minefield(settings, spawnCursor);
         elapsedSeconds = 0;
+        remainingSeconds = settings.getTimerLimitSeconds();
         if (settings.isTimerEnabled()) {
+            timerLabel.setText("Left: " + formatTime(remainingSeconds));
             timer.start();
         }
         musicManager.playEffect("select");
@@ -385,13 +387,6 @@ public class GamePanel extends JPanel {
         return textures.player(facingDirection);
     }
 
-    private Color textColorFor(Tile tile, boolean playerHere) {
-        if (tile.isFlagged()) {
-            return ScreenStyles.DANGER;
-        }
-        return playerHere ? ScreenStyles.BLACK : ScreenStyles.WHITE;
-    }
-
     private void hideCursorOverGameArea() {
         Image cursorImage = new java.awt.image.BufferedImage(16, 16, java.awt.image.BufferedImage.TYPE_INT_ARGB);
         Cursor hiddenCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(0, 0), "hidden");
@@ -413,34 +408,23 @@ public class GamePanel extends JPanel {
     private void playResultOverlay() {
         GameResult result = new GameResult(false, minefield.getDiscoveredSafeTiles(), minefield.getTotalSafeTiles(),
                 elapsedSeconds, settings);
-        recordResult.accept(result);
-        resultOverlay.setStats("Explored " + result.getDiscoveredSafeTiles() + "/" + result.getTotalSafeTiles()
-                + " safe tiles  |  Time " + result.getElapsedSeconds() + "s");
-        resultOverlay.setTitle("GAME OVER");
-        resultOverlay.setVisible(true);
-        resultOverlay.resetAnimation();
-        musicManager.playSoundtrack("game-over");
-
-        Timer animation = new Timer(16, null);
-        animation.addActionListener(event -> {
-            boolean finished = resultOverlay.slideDown();
-            if (finished) {
-                animation.stop();
-            }
-        });
-        animation.start();
+        showResultOverlay(result, "GAME OVER", "game-over");
     }
 
     private void playWinOverlay() {
         GameResult result = new GameResult(true, minefield.getDiscoveredSafeTiles(), minefield.getTotalSafeTiles(),
                 elapsedSeconds, settings);
+        showResultOverlay(result, "YOU WIN!", "you-won");
+    }
+
+    private void showResultOverlay(GameResult result, String title, String soundtrack) {
         recordResult.accept(result);
-        resultOverlay.setTitle("YOU WIN!");
+        resultOverlay.setTitle(title);
         resultOverlay.setStats("Explored " + result.getDiscoveredSafeTiles() + "/" + result.getTotalSafeTiles()
                 + " safe tiles  |  Time " + result.getElapsedSeconds() + "s");
         resultOverlay.setVisible(true);
         resultOverlay.resetAnimation();
-        musicManager.playSoundtrack("you-won");
+        musicManager.playSoundtrack(soundtrack);
 
         Timer animation = new Timer(16, null);
         animation.addActionListener(event -> {
@@ -455,8 +439,34 @@ public class GamePanel extends JPanel {
     private void tick(ActionEvent event) {
         if (!paused && !gameFinished && !selectingSpawn) {
             elapsedSeconds++;
-            timerLabel.setText("Time: " + elapsedSeconds + "s");
+            if (settings.isTimerEnabled()) {
+                remainingSeconds--;
+                timerLabel.setText("Left: " + formatTime(remainingSeconds));
+                if (remainingSeconds <= 0) {
+                    triggerTimeoutLoss();
+                }
+            }
         }
+    }
+
+    private void triggerTimeoutLoss() {
+        timer.stop();
+        gameFinished = true;
+        playerDead = true;
+        if (minefield != null) {
+            minefield.explodeAllMines();
+            refreshBoard();
+        }
+        musicManager.stopSoundtrack();
+        musicManager.playEffect("explosion");
+        Timer delay = new Timer(2000, event -> playResultOverlay());
+        delay.setRepeats(false);
+        delay.start();
+    }
+
+    private String formatTime(int seconds) {
+        int safeSeconds = Math.max(0, seconds);
+        return String.format("%d:%02d", safeSeconds / 60, safeSeconds % 60);
     }
 
     @Override
@@ -521,7 +531,7 @@ public class GamePanel extends JPanel {
         private final Runnable playAgain;
         private final Runnable menu;
 
-        ResultOverlay(Runnable playAgain, Runnable menu, MusicManager musicManager) {
+        ResultOverlay(Runnable playAgain, Runnable menu) {
             this.playAgain = playAgain;
             this.menu = menu;
             setVisible(false);
@@ -609,8 +619,8 @@ public class GamePanel extends JPanel {
     private static class PauseOverlay extends JPanel {
         private static final long serialVersionUID = 1L;
         private final JLabel title = new JLabel("PAUSED", SwingConstants.CENTER);
-        private final JLabel resume = new JLabel("RESUME", SwingConstants.CENTER);
-        private final JLabel exit = new JLabel("EXIT TO MENU", SwingConstants.CENTER);
+        private final JButton resume = new SpriteButton("RESUME");
+        private final JButton exit = new SpriteButton("EXIT TO MENU");
         private final Runnable resumeAction;
         private final Runnable exitAction;
         private int selected;
@@ -625,6 +635,7 @@ public class GamePanel extends JPanel {
 
             title.setForeground(ScreenStyles.WHITE);
             title.setFont(ScreenStyles.pixelFont(Font.BOLD, 42));
+            title.setBorder(BorderFactory.createEmptyBorder(0, 0, 16, 0));
             resume.setFont(ScreenStyles.pixelFont(Font.BOLD, 22));
             exit.setFont(ScreenStyles.pixelFont(Font.BOLD, 22));
             add(title);

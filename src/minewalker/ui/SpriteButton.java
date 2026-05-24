@@ -24,7 +24,7 @@ class SpriteButton extends JButton {
         setContentAreaFilled(false);
         setBorderPainted(false);
         setOpaque(false);
-        setMargin(new Insets(18, 40, 18, 40));
+        setMargin(new Insets(9, 40, 9, 40));
     }
 
     @Override

@@ -17,11 +17,12 @@ import javax.swing.SwingConstants;
 
 import minewalker.audio.MusicManager;
 import minewalker.model.GameSettings;
-import minewalker.persistence.GameStorage;
 
 public class ConfigureMinesPanel extends JPanel {
+    private static final long serialVersionUID = 1L;
+
     public ConfigureMinesPanel(GameSettings initialSettings, Consumer<GameSettings> startGame, Runnable back,
-            GameStorage storage, MusicManager musicManager) {
+            MusicManager musicManager) {
         setLayout(new BorderLayout(20, 20));
         setBackground(ScreenStyles.BLACK);
         setBorder(ScreenStyles.pageBorder());
@@ -30,7 +31,7 @@ public class ConfigureMinesPanel extends JPanel {
         JLabel title = new JLabel("Configure Tiles", SwingConstants.CENTER);
         title.setForeground(ScreenStyles.WHITE);
         title.setFont(ScreenStyles.pixelFont(Font.BOLD, 46));
-        title.setBorder(BorderFactory.createEmptyBorder(0, 0, 16, 0));
+        title.setBorder(BorderFactory.createEmptyBorder(0, 0, 32, 0));
         add(title, BorderLayout.NORTH);
 
         JPanel fields = new JPanel(new GridLayout(0, 2, 14, 14));
@@ -50,11 +51,28 @@ public class ConfigureMinesPanel extends JPanel {
         timer.setForeground(ScreenStyles.WHITE);
         timer.setBackground(ScreenStyles.BLACK);
         timer.setFont(ScreenStyles.pixelFont(Font.PLAIN, 18));
+        SpriteSlider timeLimit = new SpriteSlider(1, 5, initialSettings.getTimerLimitSeconds() / 60);
+        timeLimit.setMajorTickSpacing(1);
+        timeLimit.setPaintTicks(true);
+        timeLimit.setPaintLabels(true);
+        timeLimit.setOpaque(false);
+        timeLimit.setForeground(ScreenStyles.WHITE);
+        timeLimit.setBackground(ScreenStyles.BLACK);
 
         JLabel rowsLabel = ScreenStyles.label("ROWS", 18);
         JLabel columnsLabel = ScreenStyles.label("COLUMNS", 18);
         JLabel minesLabel = ScreenStyles.label("BOMBS (%)", 18);
         JLabel timerLabel = ScreenStyles.label("TIMER", 18);
+        JLabel timeLimitLabel = ScreenStyles.label("TIME LIMIT", 18);
+        timeLimitLabel.setVisible(timer.isSelected());
+        timeLimit.setVisible(timer.isSelected());
+        Runnable refreshTimerLimitVisibility = () -> {
+            timeLimitLabel.setVisible(timer.isSelected());
+            timeLimit.setVisible(timer.isSelected());
+            revalidate();
+            repaint();
+        };
+        timer.addActionListener(event -> refreshTimerLimitVisibility.run());
 
         fields.add(rowsLabel);
         fields.add(rows);
@@ -64,6 +82,8 @@ public class ConfigureMinesPanel extends JPanel {
         fields.add(mines);
         fields.add(timerLabel);
         fields.add(timer);
+        fields.add(timeLimitLabel);
+        fields.add(timeLimit);
         add(fields, BorderLayout.CENTER);
 
         JPanel actions = new JPanel();
@@ -73,8 +93,8 @@ public class ConfigureMinesPanel extends JPanel {
         JButton menu = ScreenStyles.button("BACK");
         Runnable startAction = () -> {
             musicManager.playEffect("select");
-            GameSettings settings = new GameSettings(rows.getValue(), columns.getValue(), mines.getValue(),
-                    timer.isSelected());
+            GameSettings settings = initialSettings.withBoard(rows.getValue(), columns.getValue(), mines.getValue(),
+                    timer.isSelected(), timeLimit.getValue() * 60);
             startGame.accept(settings);
         };
         Runnable resetAction = () -> {
@@ -84,6 +104,8 @@ public class ConfigureMinesPanel extends JPanel {
             columns.setValue(defaults.getColumns());
             mines.setValue(defaults.getMinePercentage());
             timer.setSelected(defaults.isTimerEnabled());
+            timeLimit.setValue(defaults.getTimerLimitSeconds() / 60);
+            refreshTimerLimitVisibility.run();
         };
         Runnable menuAction = () -> {
             musicManager.playEffect("select");
@@ -144,21 +166,37 @@ public class ConfigureMinesPanel extends JPanel {
             @Override
             public void activate() {
                 timer.setSelected(!timer.isSelected());
+                refreshTimerLimitVisibility.run();
+            }
+        });
+        selector.add(new KeyboardSelector.SelectableItem() {
+            @Override
+            public void setSelected(boolean selected) {
+                timeLimitLabel.setForeground(selected ? ScreenStyles.ACCENT : ScreenStyles.WHITE);
+                timeLimit.setForeground(selected ? ScreenStyles.ACCENT : ScreenStyles.WHITE);
+            }
+
+            @Override
+            public void activate() {
+                if (timer.isSelected()) {
+                    timeLimit.setValue(Math.min(timeLimit.getMaximum(), timeLimit.getValue() + 1));
+                }
             }
         });
         selector.add(new KeyboardItem(start, startAction));
         selector.add(new KeyboardItem(reset, resetAction));
         selector.add(new KeyboardItem(menu, menuAction));
         selector.bindTo(this);
-        bindSettingAdjustments(rows, columns, mines, selector);
+        bindSettingAdjustments(rows, columns, mines, timeLimit, timer, selector);
     }
 
-    private void bindSettingAdjustments(CounterControl rows, CounterControl columns, JSlider mines,
+    private void bindSettingAdjustments(CounterControl rows, CounterControl columns, JSlider mines, JSlider timeLimit,
+            SpriteCheckBox timer,
             KeyboardSelector selector) {
-        bindAdjustment("LEFT", () -> adjustSelected(rows, columns, mines, selector, -1));
-        bindAdjustment("A", () -> adjustSelected(rows, columns, mines, selector, -1));
-        bindAdjustment("RIGHT", () -> adjustSelected(rows, columns, mines, selector, 1));
-        bindAdjustment("D", () -> adjustSelected(rows, columns, mines, selector, 1));
+        bindAdjustment("LEFT", () -> adjustSelected(rows, columns, mines, timeLimit, timer, selector, -1));
+        bindAdjustment("A", () -> adjustSelected(rows, columns, mines, timeLimit, timer, selector, -1));
+        bindAdjustment("RIGHT", () -> adjustSelected(rows, columns, mines, timeLimit, timer, selector, 1));
+        bindAdjustment("D", () -> adjustSelected(rows, columns, mines, timeLimit, timer, selector, 1));
     }
 
     private void bindAdjustment(String key, Runnable action) {
@@ -173,8 +211,8 @@ public class ConfigureMinesPanel extends JPanel {
         });
     }
 
-    private void adjustSelected(CounterControl rows, CounterControl columns, JSlider mines, KeyboardSelector selector,
-            int direction) {
+    private void adjustSelected(CounterControl rows, CounterControl columns, JSlider mines, JSlider timeLimit,
+            SpriteCheckBox timer, KeyboardSelector selector, int direction) {
         switch (selector.selectedIndex()) {
             case 0:
                 if (direction < 0) {
@@ -192,6 +230,12 @@ public class ConfigureMinesPanel extends JPanel {
                 break;
             case 2:
                 mines.setValue(Math.max(mines.getMinimum(), Math.min(mines.getMaximum(), mines.getValue() + direction * 5)));
+                break;
+            case 4:
+                if (timer.isSelected()) {
+                    timeLimit.setValue(Math.max(timeLimit.getMinimum(),
+                            Math.min(timeLimit.getMaximum(), timeLimit.getValue() + direction)));
+                }
                 break;
             default:
                 break;

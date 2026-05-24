@@ -23,14 +23,11 @@ final class ScreenStyles {
     static final Color GREY = new Color(135, 136,  137);
     static final Color WHITE = Color.WHITE;
     static final Color PANEL = new Color(10, 10, 12);
-    static final Color GRID = new Color(64, 70, 82);
-    static final Color PLAYER = new Color(66, 227, 158);
-    static final Color REVEALED = new Color(26, 34, 42);
-    static final Color DANGER = new Color(235, 82, 82);
-    static final Color ACCENT = new Color(112, 174, 255);
+    static final Color ACCENT = new Color(230, 150, 25);
     static final Color GREEN = new Color(30, 140, 60);
     static final Color RED = new Color(140, 30, 30);
 
+    private static final int BUTTON_BORDER_WIDTH = 2;
     private static final Map<String, Font> FONT_CACHE = new HashMap<>();
     private static final Font MONOCRAFT = loadMonocraft();
 
@@ -43,11 +40,11 @@ final class ScreenStyles {
     }
 
     static Border pageBorder() {
-        return BorderFactory.createEmptyBorder(144, 192, 144, 192);
+        return BorderFactory.createEmptyBorder(96, 160, 96, 160);
     }
 
     static Border gameBorder() {
-        return BorderFactory.createEmptyBorder(36, 48, 36, 48);
+        return BorderFactory.createEmptyBorder(48, 96, 48, 96);
     }
 
     static JButton button(String text) {
@@ -57,10 +54,15 @@ final class ScreenStyles {
         button.setFont(pixelFont(Font.BOLD, 18));
         button.setForeground(WHITE);
         button.setBackground(PANEL);
-        button.setBorder(new CompoundBorder(new LineBorder(ACCENT, 2, true),
-                BorderFactory.createEmptyBorder(14, 34, 14, 34)));
+        button.setBorder(buttonBorder(false));
         button.setMargin(new Insets(18, 40, 18, 40));
         return button;
+    }
+
+    static Border buttonBorder(boolean selected) {
+        Color color = selected ? WHITE : ACCENT;
+        return new CompoundBorder(new LineBorder(color, BUTTON_BORDER_WIDTH, true),
+                BorderFactory.createEmptyBorder(14, 34, 14, 34));
     }
 
     static JLabel label(String text, int size) {

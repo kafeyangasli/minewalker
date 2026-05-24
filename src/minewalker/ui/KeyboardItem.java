@@ -1,6 +1,5 @@
 package minewalker.ui;
 
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 
@@ -27,7 +26,7 @@ class KeyboardItem implements KeyboardSelector.SelectableItem {
             label.setForeground(selected ? ScreenStyles.ACCENT : ScreenStyles.WHITE);
         }
         if (button != null) {
-            button.setBorder(BorderFactory.createLineBorder(selected ? ScreenStyles.WHITE : ScreenStyles.ACCENT, 2));
+            button.setBorder(ScreenStyles.buttonBorder(selected));
             button.setForeground(selected ? ScreenStyles.ACCENT : ScreenStyles.WHITE);
         }
     }

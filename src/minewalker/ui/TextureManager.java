@@ -10,7 +10,7 @@ import javax.imageio.ImageIO;
 import minewalker.model.Direction;
 
 final class TextureManager {
-    private static final int SPRITE_SIZE = 31;
+    private static final int SPRITE_SIZE = 32;
     private static final int SPRITE_STRIDE = 32;
     private static final int COLUMNS = 9;
     private static final int UNREVEALED = 0;

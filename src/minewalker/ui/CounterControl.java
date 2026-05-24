@@ -43,7 +43,7 @@ class CounterControl extends JPanel {
         valueLabel.setForeground(ScreenStyles.WHITE);
         valueLabel.setBackground(ScreenStyles.PANEL);
         valueLabel.setFont(ScreenStyles.pixelFont(Font.BOLD, 18));
-        valueLabel.setBorder(BorderFactory.createLineBorder(ScreenStyles.GRID, 2));
+        valueLabel.setBorder(BorderFactory.createLineBorder(ScreenStyles.WHITE, 2));
         valueLabel.setText(Integer.toString(this.value));
 
         JPanel buttons = new JPanel(new GridLayout(1, 2, 4, 0));
@@ -73,7 +73,7 @@ class CounterControl extends JPanel {
     }
 
     void setSelected(boolean selected) {
-        valueLabel.setBorder(BorderFactory.createLineBorder(selected ? ScreenStyles.ACCENT : ScreenStyles.GRID, 2));
+        valueLabel.setBorder(BorderFactory.createLineBorder(selected ? ScreenStyles.ACCENT : ScreenStyles.WHITE, 2));
     }
 
     private JButton arrowButton(String text) {

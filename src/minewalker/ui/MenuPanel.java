@@ -6,13 +6,15 @@ import java.awt.GridLayout;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JPanel;
-import javax.swing.border.BevelBorder;
 
 import minewalker.audio.MusicManager;
 import minewalker.persistence.GameStorage;
 
 public class MenuPanel extends JPanel {
-    public MenuPanel(Runnable playSettings, Runnable guide, GameStorage storage, MusicManager musicManager) {
+    private static final long serialVersionUID = 1L;
+
+    public MenuPanel(Runnable playSettings, Runnable settings, Runnable guide, GameStorage storage,
+            MusicManager musicManager) {
         setLayout(new BorderLayout(20, 20));
         setBackground(ScreenStyles.BLACK);
         setBorder(ScreenStyles.pageBorder());
@@ -24,13 +26,9 @@ public class MenuPanel extends JPanel {
 
         JPanel actions = new JPanel(new GridLayout(0, 1, 14, 14));
         actions.setOpaque(false);
-        JButton play = ScreenStyles.button("PLAY SETTINGS");
+        JButton play = ScreenStyles.button("PLAY");
+        JButton settingsButton = ScreenStyles.button("SETTINGS");
         JButton guideButton = ScreenStyles.button("GUIDE");
-        JButton mute = ScreenStyles.button(musicManager.isMuted() ? "UNMUTE AUDIO" : "MUTE AUDIO");
-
-        play.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-        guideButton.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-        mute.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
 
         Runnable playAction = () -> {
             musicManager.playEffect("select");
@@ -40,24 +38,23 @@ public class MenuPanel extends JPanel {
             musicManager.playEffect("select");
             guide.run();
         };
-        Runnable muteAction = () -> {
-            musicManager.setMuted(!musicManager.isMuted());
-            mute.setText(musicManager.isMuted() ? "UNMUTE AUDIO" : "MUTE AUDIO");
+        Runnable settingsAction = () -> {
+            musicManager.playEffect("select");
+            settings.run();
         };
 
         play.addActionListener(event -> playAction.run());
+        settingsButton.addActionListener(event -> settingsAction.run());
         guideButton.addActionListener(event -> guideAction.run());
-        mute.addActionListener(event -> muteAction.run());
-
         actions.add(play);
+        actions.add(settingsButton);
         actions.add(guideButton);
-        actions.add(mute);
         add(actions, BorderLayout.CENTER);
 
         KeyboardSelector selector = new KeyboardSelector();
         selector.add(new KeyboardItem(play, playAction));
+        selector.add(new KeyboardItem(settingsButton, settingsAction));
         selector.add(new KeyboardItem(guideButton, guideAction));
-        selector.add(new KeyboardItem(mute, muteAction));
         selector.bindTo(this);
 
         JPanel recent = new JPanel(new GridLayout(0, 1, 4, 4));

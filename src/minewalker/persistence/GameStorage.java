@@ -30,7 +30,12 @@ public class GameStorage {
             int columns = Integer.parseInt(properties.getProperty("columns", "10"));
             int mines = Integer.parseInt(properties.getProperty("minePercentage", "15"));
             boolean timer = Boolean.parseBoolean(properties.getProperty("timerEnabled", "true"));
-            return Optional.of(new GameSettings(rows, columns, mines, timer));
+            int timerLimitSeconds = Integer.parseInt(properties.getProperty("timerLimitSeconds", "180"));
+            int sfxVolume = Integer.parseInt(properties.getProperty("sfxVolume", "80"));
+            int soundtrackVolume = Integer.parseInt(properties.getProperty("soundtrackVolume", "70"));
+            String flagKey = properties.getProperty("flagKey", "F");
+            return Optional.of(new GameSettings(rows, columns, mines, timer, timerLimitSeconds, sfxVolume,
+                    soundtrackVolume, flagKey));
         } catch (IOException | NumberFormatException ex) {
             return Optional.empty();
         }
@@ -43,6 +48,10 @@ public class GameStorage {
         properties.setProperty("columns", Integer.toString(settings.getColumns()));
         properties.setProperty("minePercentage", Integer.toString(settings.getMinePercentage()));
         properties.setProperty("timerEnabled", Boolean.toString(settings.isTimerEnabled()));
+        properties.setProperty("timerLimitSeconds", Integer.toString(settings.getTimerLimitSeconds()));
+        properties.setProperty("sfxVolume", Integer.toString(settings.getSfxVolume()));
+        properties.setProperty("soundtrackVolume", Integer.toString(settings.getSoundtrackVolume()));
+        properties.setProperty("flagKey", settings.getFlagKey());
         try (BufferedWriter writer = Files.newBufferedWriter(settingsFile)) {
             properties.store(writer, "Minewalker settings");
         } catch (IOException ignored) {

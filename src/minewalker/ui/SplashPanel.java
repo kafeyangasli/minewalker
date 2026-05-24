@@ -18,6 +18,7 @@ import javax.swing.Timer;
 import minewalker.audio.MusicManager;
 
 public class SplashPanel extends JPanel {
+    private static final long serialVersionUID = 1L;
     private static final int FADE_INTERVAL_MILLIS = 35;
     private static final float FADE_STEP = 0.015f;
 

@@ -120,6 +120,12 @@ public class Minefield {
         return won;
     }
 
+    public void explodeAllMines() {
+        ended = true;
+        won = false;
+        revealAllMines();
+    }
+
     private TileVisitResult visitCurrentTile() {
         Tile tile = getTile(player.getPosition().y(), player.getPosition().x());
         boolean alreadyRevealed = tile.isRevealed();
