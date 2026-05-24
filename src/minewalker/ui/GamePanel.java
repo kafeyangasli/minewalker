@@ -148,7 +148,7 @@ public class GamePanel extends JPanel {
         bind("LEFT", Direction.LEFT);
         bind("D", Direction.RIGHT);
         bind("RIGHT", Direction.RIGHT);
-        board.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(settings.getFlagKey()), "flag");
+        board.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("F"), "flag");
         board.getActionMap().put("flag", new AbstractAction() {
             private static final long serialVersionUID = 1L;
 

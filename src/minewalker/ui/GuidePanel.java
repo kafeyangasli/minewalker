@@ -29,14 +29,13 @@ public class GuidePanel extends JPanel {
 
         JPanel text = new JPanel(new GridLayout(0, 1, 8, 8));
         text.setOpaque(false);
-        text.add(ScreenStyles.label("Menu: UP/DOWN atau W/S untuk memilih, ENTER/SPACE untuk konfirmasi.", 17));
-        text.add(ScreenStyles.label("SPAWN: MOVE THE GREEN CURSOR, THEN PRESS ENTER OR SPACE.", 17));
-        text.add(ScreenStyles.label("GOAL: REVEAL EVERY SAFE TILE WITHOUT STEPPING ON A MINE.", 17));
-        text.add(ScreenStyles.label("MOVE: WASD OR ARROW KEYS.", 17));
-        text.add(ScreenStyles.label("FLAG: PRESS F, THEN A DIRECTION KEY TO TOGGLE A FLAG.", 17));
-        text.add(ScreenStyles.label("FLAGS BLOCK MOVEMENT AND HELP PREVENT ACCIDENTAL STEPS.", 17));
-        text.add(ScreenStyles.label("NUMBERS SHOW HOW MANY MINES TOUCH A REVEALED TILE.", 17));
-        text.add(ScreenStyles.label("PAUSE: ESC DURING GAMEPLAY.", 17));
+        text.add(ScreenStyles.label("Menus: W/S atau Up/Down untuk memilih menu, Enter atau Space untuk konfirmasi.", 15));
+        text.add(ScreenStyles.label("Gameplay Configuration: W/S atau Up/Down untuk memilih, A/D atau Left/Right untuk mengatur value.", 15));
+        text.add(ScreenStyles.label("Spawn: WASD atau tombol arah pada keyboard untuk menentukan titik spawn, lalu Enter atau Space.", 15));
+        text.add(ScreenStyles.label("Gameplay: WASD atau tombol arah untuk bergerak.", 15));
+        text.add(ScreenStyles.label("Flag: tekan F, lalu WASD atau tombol arah untuk menaruh flag.", 15));
+        text.add(ScreenStyles.label("Pause: Esc, lalu W/S atau Up/Down, dan Enter atau Space untuk konfirmasi.", 15));
+        text.add(ScreenStyles.label("Gameplay Finished: Space untuk memulai kembali, Esc untuk kembali ke menu.", 15));
         add(text, BorderLayout.CENTER);
 
         JButton backButton = ScreenStyles.button("BACK");
