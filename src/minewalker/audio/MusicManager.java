@@ -10,6 +10,7 @@ import java.util.Optional;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.LineEvent;
 
 public class MusicManager {
@@ -84,7 +85,7 @@ public class MusicManager {
     public void setMuted(boolean muted) {
         this.muted = muted;
         if (muted) {
-            stopSoundtrack();
+            
         }
     }
 

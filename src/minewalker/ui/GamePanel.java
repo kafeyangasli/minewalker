@@ -39,7 +39,8 @@ import minewalker.model.SafeTile;
 import minewalker.model.Tile;
 
 public class GamePanel extends JPanel {
-    private static final int MAX_TILE_SIZE = 72;
+    private static final int MAX_TILE_SIZE = 48;
+    private static final int MIN_TILE_SIZE = 20;
 
     private final GameSettings settings;
     private Minefield minefield;
@@ -52,13 +53,16 @@ public class GamePanel extends JPanel {
     private final JLayeredPane playLayer = new JLayeredPane();
     private final ResultOverlay resultOverlay;
     private final PauseOverlay pauseOverlay;
-    private final Map<Position, JLabel> tileLabels = new HashMap<>();
+    private final Map<Position, TileView> tileLabels = new HashMap<>();
+    private final TextureManager textures = TextureManager.get();
     private final Timer timer;
     private int elapsedSeconds;
     private boolean waitingForFlagDirection;
     private boolean paused;
     private boolean selectingSpawn = true;
     private boolean gameFinished;
+    private boolean playerDead;
+    private Direction facingDirection = Direction.DOWN;
     private Position spawnCursor;
 
     public GamePanel(GameSettings settings, Consumer<GameResult> recordResult,
@@ -91,7 +95,7 @@ public class GamePanel extends JPanel {
 
         board.setFocusable(true);
         board.setBackground(ScreenStyles.BLACK);
-        board.setLayout(new GridLayout(settings.getRows(), settings.getColumns(), 3, 3));
+        board.setLayout(new GridLayout(settings.getRows(), settings.getColumns(), 0, 0));
         hideCursorOverGameArea();
         playLayer.add(board, JLayeredPane.DEFAULT_LAYER);
         playLayer.add(resultOverlay, JLayeredPane.PALETTE_LAYER);
@@ -118,8 +122,8 @@ public class GamePanel extends JPanel {
         board.removeAll();
         for (int row = 0; row < settings.getRows(); row++) {
             for (int column = 0; column < settings.getColumns(); column++) {
-                JLabel label = new JLabel("", SwingConstants.CENTER);
-                label.setOpaque(true);
+                TileView label = new TileView();
+                label.setOpaque(false);
                 label.setFont(ScreenStyles.pixelFont(Font.BOLD, 18));
                 label.setForeground(ScreenStyles.WHITE);
                 label.setBorder(BorderFactory.createLineBorder(ScreenStyles.WHITE));
@@ -247,16 +251,20 @@ public class GamePanel extends JPanel {
         }
 
         if (outcome == MoveOutcome.MOVED) {
+            facingDirection = direction;
             musicManager.playEffect("step");
         } else if (outcome == MoveOutcome.WON) {
-            musicManager.playEffect("win");
+            facingDirection = direction;
+            musicManager.playEffect("completed");
+            musicManager.stopSoundtrack();
+        } else if (outcome == MoveOutcome.LOST) {
+            facingDirection = direction;
+            playerDead = true;
         }
         refreshBoard();
 
         if (outcome == MoveOutcome.WON) {
             timer.stop();
-            musicManager.playEffect("win");
-            musicManager.stopSoundtrack();
             gameFinished = true;
             Timer delay = new Timer(2000, event -> playWinOverlay());
             delay.setRepeats(false);
@@ -282,7 +290,9 @@ public class GamePanel extends JPanel {
             for (int column = 0; column < settings.getColumns(); column++) {
                 Tile tile = minefield.getTile(row, column);
                 boolean playerHere = tile.getPosition().equals(playerPosition);
-                JLabel label = tileLabels.get(tile.getPosition());
+                TileView label = tileLabels.get(tile.getPosition());
+                label.setSprite(spriteFor(tile));
+                label.setOverlaySprite(playerHere ? playerSprite() : null);
                 label.setBackground(tile.getDisplayColor(playerHere));
                 label.setForeground(textColorFor(tile, playerHere));
                 label.setText(displayTextFor(tile, playerHere));
@@ -296,8 +306,10 @@ public class GamePanel extends JPanel {
         for (int row = 0; row < settings.getRows(); row++) {
             for (int column = 0; column < settings.getColumns(); column++) {
                 Position position = new Position(column, row);
-                JLabel label = tileLabels.get(position);
+                TileView label = tileLabels.get(position);
                 boolean cursorHere = position.equals(spawnCursor);
+                label.setSprite(textures.hiddenTile());
+                label.setOverlaySprite(cursorHere ? textures.player("spawn") : null);
                 label.setBackground(cursorHere ? ScreenStyles.PLAYER : ScreenStyles.BLACK);
                 label.setForeground(cursorHere ? ScreenStyles.BLACK : ScreenStyles.WHITE);
                 label.setText(cursorHere ? "S" : "");
@@ -329,6 +341,14 @@ public class GamePanel extends JPanel {
     }
 
     private String displayTextFor(Tile tile, boolean playerHere) {
+        if (textures.hasTexture()) {
+            int nearbyMines = tile.isRevealed() && tile instanceof SafeTile
+                    ? minefield.countAdjacentMines(tile.getPosition())
+                    : 0;
+            if (tile.isFlagged() || !tile.isRevealed() || nearbyMines <= 6) {
+                return "";
+            }
+        }
         if (tile.isFlagged()) {
             return "F";
         }
@@ -338,6 +358,31 @@ public class GamePanel extends JPanel {
 
         int nearbyMines = minefield.countAdjacentMines(tile.getPosition());
         return nearbyMines > 0 ? Integer.toString(nearbyMines) : tile.getDisplayText(false);
+    }
+
+    private Image spriteFor(Tile tile) {
+        if (tile.isFlagged()) {
+            return textures.flagTile();
+        }
+        if (!tile.isRevealed()) {
+            return textures.hiddenTile();
+        }
+        if (!(tile instanceof SafeTile)) {
+            return textures.mineTile();
+        }
+
+        int nearbyMines = minefield.countAdjacentMines(tile.getPosition());
+        if (nearbyMines > 0) {
+            return textures.numberTile(nearbyMines);
+        }
+        return textures.revealedTile();
+    }
+
+    private Image playerSprite() {
+        if (playerDead) {
+            return textures.player("death");
+        }
+        return textures.player(facingDirection);
     }
 
     private Color textColorFor(Tile tile, boolean playerHere) {
@@ -395,7 +440,7 @@ public class GamePanel extends JPanel {
                 + " safe tiles  |  Time " + result.getElapsedSeconds() + "s");
         resultOverlay.setVisible(true);
         resultOverlay.resetAnimation();
-        musicManager.playSoundtrack("win");
+        musicManager.playSoundtrack("you-won");
 
         Timer animation = new Timer(16, null);
         animation.addActionListener(event -> {
@@ -418,13 +463,19 @@ public class GamePanel extends JPanel {
     public void doLayout() {
         super.doLayout();
         Dimension size = playLayer.getSize();
-        int tileSize = Math.max(12, Math.min(MAX_TILE_SIZE,
-                Math.min(size.width / settings.getColumns(), size.height / settings.getRows())));
+        int tileSize = calculateTileSize(size);
         int boardWidth = tileSize * settings.getColumns();
         int boardHeight = tileSize * settings.getRows();
         board.setBounds((size.width - boardWidth) / 2, (size.height - boardHeight) / 2, boardWidth, boardHeight);
         resultOverlay.layoutFor(size);
         pauseOverlay.layoutFor(size);
+    }
+
+    private int calculateTileSize(Dimension availableSize) {
+        int widthBasedSize = availableSize.width / settings.getColumns();
+        int heightBasedSize = availableSize.height / settings.getRows();
+        int tileSize = Math.min(MAX_TILE_SIZE, Math.min(widthBasedSize, heightBasedSize));
+        return Math.max(MIN_TILE_SIZE, tileSize);
     }
 
     private void handleEscape() {

@@ -29,9 +29,8 @@ public class SplashPanel extends JPanel {
         setBorder(ScreenStyles.pageBorder());
         setFocusable(true);
 
-        JLabel title = new FadingLabel("MINEWALKER", SwingConstants.CENTER);
-        title.setForeground(ScreenStyles.WHITE);
-        title.setFont(ScreenStyles.pixelFont(Font.BOLD, 64));
+        LogoView title = new LogoView(3);
+        title.setAlpha(0f);
         add(title, BorderLayout.CENTER);
 
         JLabel prompt = new FadingLabel("", SwingConstants.CENTER);
@@ -41,7 +40,7 @@ public class SplashPanel extends JPanel {
 
         Timer fadeTimer = new Timer(FADE_INTERVAL_MILLIS, event -> {
             alpha = Math.min(1f, alpha + FADE_STEP);
-            title.repaint();
+            title.setAlpha(alpha);
             prompt.repaint();
             if (alpha >= 1f) {
                 ((Timer) event.getSource()).stop();

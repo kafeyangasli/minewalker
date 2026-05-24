@@ -3,7 +3,12 @@ package minewalker.ui;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.Image;
+import java.awt.Dimension;
+import java.awt.RenderingHints;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -72,7 +77,7 @@ class CounterControl extends JPanel {
     }
 
     private JButton arrowButton(String text) {
-        JButton button = ScreenStyles.button(text);
+        JButton button = new CounterButton(text);
         button.setFont(ScreenStyles.pixelFont(Font.BOLD, 16));
         button.setForeground(ScreenStyles.WHITE);
         button.setBackground(Color.BLACK);
@@ -81,5 +86,38 @@ class CounterControl extends JPanel {
 
     private int clamp(int value) {
         return Math.max(minimum, Math.min(maximum, value));
+    }
+
+    private static class CounterButton extends JButton {
+        private static final long serialVersionUID = 1L;
+        private final TextureManager textures = TextureManager.get();
+
+        CounterButton(String text) {
+            super(text);
+            setContentAreaFilled(false);
+            setBorderPainted(false);
+            setOpaque(false);
+            Dimension size = new Dimension(38, 38);
+            setPreferredSize(size);
+            setMinimumSize(size);
+            setMaximumSize(size);
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            Graphics2D g = (Graphics2D) graphics.create();
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+            Image sprite = "+".equals(getText()) ? textures.plus() : textures.minus();
+            if (sprite != null) {
+                int size = Math.min(getWidth(), getHeight());
+                int x = (getWidth() - size) / 2;
+                int y = (getHeight() - size) / 2;
+                g.drawImage(sprite, x, y, size, size, null);
+            }
+            g.dispose();
+            if (sprite == null) {
+                super.paintComponent(graphics);
+            }
+        }
     }
 }

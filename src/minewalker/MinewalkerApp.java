@@ -13,7 +13,7 @@ import minewalker.persistence.GameStorage;
 import minewalker.ui.GamePanel;
 import minewalker.ui.GuidePanel;
 import minewalker.ui.MenuPanel;
-import minewalker.ui.SettingsPanel;
+import minewalker.ui.ConfigureMinesPanel;
 import minewalker.ui.SplashPanel;
 
 public class MinewalkerApp {
@@ -33,14 +33,15 @@ public class MinewalkerApp {
 
     public void start() {
         currentSettings = storage.loadSettings().orElseGet(GameSettings::defaultSettings);
+        frame.setResizable(false);
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setMinimumSize(new Dimension(860, 680));
         frame.setLocationByPlatform(true);
 
         root.add(new SplashPanel(this::showMenu, musicManager), SPLASH);
-        root.add(new MenuPanel(this::showSettings, this::showGuide, storage, musicManager), MENU);
-        root.add(new SettingsPanel(currentSettings, this::startGame, this::showMenu, storage, musicManager), SETTINGS);
+        root.add(new MenuPanel(this::showConfigureMines, this::showGuide, storage, musicManager), MENU);
+        root.add(new ConfigureMinesPanel(currentSettings, this::startGame, this::showMenu, storage, musicManager), SETTINGS);
         root.add(new GuidePanel(this::showMenu, musicManager), GUIDE);
 
         frame.setContentPane(root);
@@ -60,7 +61,7 @@ public class MinewalkerApp {
         cards.show(root, MENU);
     }
 
-    public void showSettings() {
+    public void showConfigureMines() {
         musicManager.playSoundtrack("menu");
         cards.show(root, SETTINGS);
     }
@@ -88,6 +89,6 @@ public class MinewalkerApp {
 
     private void refreshMenu() {
         frame.setTitle("Minewalker");
-        root.add(new MenuPanel(this::showSettings, this::showGuide, storage, musicManager), MENU);
+        root.add(new MenuPanel(this::showConfigureMines, this::showGuide, storage, musicManager), MENU);
     }
 }

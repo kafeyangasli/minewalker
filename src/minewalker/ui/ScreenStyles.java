@@ -15,6 +15,8 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.LineBorder;
 
 final class ScreenStyles {
     static final Color BLACK = Color.BLACK;
@@ -27,7 +29,7 @@ final class ScreenStyles {
     static final Color DANGER = new Color(235, 82, 82);
     static final Color ACCENT = new Color(112, 174, 255);
     static final Color GREEN = new Color(30, 140, 60);
-    static final Color RED = new Color(255, 0, 0);
+    static final Color RED = new Color(140, 30, 30);
 
     private static final Map<String, Font> FONT_CACHE = new HashMap<>();
     private static final Font MONOCRAFT = loadMonocraft();
@@ -49,14 +51,15 @@ final class ScreenStyles {
     }
 
     static JButton button(String text) {
-        JButton button = new JButton(text);
+        JButton button = new SpriteButton(text);
         button.setFocusPainted(false);
         button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         button.setFont(pixelFont(Font.BOLD, 18));
         button.setForeground(WHITE);
         button.setBackground(PANEL);
-        button.setBorder(BorderFactory.createLineBorder(ACCENT, 2));
-        button.setMargin(new Insets(12, 24, 12, 24));
+        button.setBorder(new CompoundBorder(new LineBorder(ACCENT, 2, true),
+                BorderFactory.createEmptyBorder(14, 34, 14, 34)));
+        button.setMargin(new Insets(18, 40, 18, 40));
         return button;
     }
 

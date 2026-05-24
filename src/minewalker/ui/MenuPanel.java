@@ -1,14 +1,11 @@
 package minewalker.ui;
 
 import java.awt.BorderLayout;
-import java.awt.Font;
 import java.awt.GridLayout;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingConstants;
 import javax.swing.border.BevelBorder;
 
 import minewalker.audio.MusicManager;
@@ -21,9 +18,7 @@ public class MenuPanel extends JPanel {
         setBorder(ScreenStyles.pageBorder());
         setFocusable(true);
 
-        JLabel title = new JLabel("MINEWALKER", SwingConstants.CENTER);
-        title.setForeground(ScreenStyles.WHITE);
-        title.setFont(ScreenStyles.pixelFont(Font.BOLD, 60));
+        LogoView title = new LogoView(2);
         title.setBorder(BorderFactory.createEmptyBorder(0, 0, 32, 0));
         add(title, BorderLayout.NORTH);
 
