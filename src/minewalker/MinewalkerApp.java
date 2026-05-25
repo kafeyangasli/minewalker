@@ -45,7 +45,7 @@ public class MinewalkerApp {
         frame.setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
         frame.setPreferredSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
         frame.setLocationByPlatform(true);
-        frame.setResizable(false);
+        frame.setResizable(true);
 
         root.add(new SplashPanel(this::showMenu, musicManager), SPLASH);
         root.add(new MenuPanel(this::showConfigureMines, this::showSettings, this::showGuide, storage, musicManager), MENU);

@@ -20,6 +20,8 @@ import minewalker.model.GameSettings;
 
 public class ConfigureMinesPanel extends JPanel {
     private static final long serialVersionUID = 1L;
+    private static final int MAX_M = 24;
+    private static final int MAX_N = 24;
 
     public ConfigureMinesPanel(GameSettings initialSettings, Consumer<GameSettings> startGame, Runnable back,
             MusicManager musicManager) {
@@ -37,9 +39,9 @@ public class ConfigureMinesPanel extends JPanel {
         JPanel fields = new JPanel(new GridLayout(0, 2, 14, 14));
         fields.setOpaque(false);
 
-        CounterControl rows = new CounterControl(initialSettings.getRows(), 5, 24, 1);
-        CounterControl columns = new CounterControl(initialSettings.getColumns(), 5, 30, 1);
-        SpriteSlider mines = new SpriteSlider(5, 45, initialSettings.getMinePercentage());
+        CounterControl rows = new CounterControl(initialSettings.getRows(), 5, MAX_M, 1);
+        CounterControl columns = new CounterControl(initialSettings.getColumns(), 5, MAX_N, 1);
+        SpriteSlider mines = new SpriteSlider(5, 35, initialSettings.getMinePercentage());
         mines.setMajorTickSpacing(10);
         mines.setPaintTicks(true);
         mines.setPaintLabels(true);

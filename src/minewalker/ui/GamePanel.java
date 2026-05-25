@@ -313,6 +313,7 @@ public class GamePanel extends JPanel {
                 boolean cursorHere = position.equals(spawnCursor);
                 label.setSprite(textures.hiddenTile());
                 label.setOverlaySprite(cursorHere ? textures.player("spawn") : null);
+                label.setBackground(cursorHere ? ScreenStyles.ACCENT : ScreenStyles.GREY);
             }
         }
         status.setText("Pilih tempat spawn");
@@ -631,7 +632,7 @@ public class GamePanel extends JPanel {
             setVisible(false);
             setOpaque(false);
             setLayout(new GridLayout(0, 1, 8, 8));
-            setBorder(BorderFactory.createEmptyBorder(120, 180, 120, 180));
+            setBorder(ScreenStyles.pageBorder());
 
             title.setForeground(ScreenStyles.WHITE);
             title.setFont(ScreenStyles.pixelFont(Font.BOLD, 42));

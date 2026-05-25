@@ -1,7 +1,6 @@
 package minewalker.model;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.List;
@@ -27,7 +26,7 @@ public class Minefield {
     public Minefield(GameSettings settings, Position spawn) {
         this.settings = settings;
         Set<Position> protectedPositions = protectedStartArea(settings, spawn);
-        Set<Position> minePositions = generateMinePositions(settings, spawn, protectedPositions);
+        Set<Position> minePositions = generateMinePositions(settings, protectedPositions);
         validateSafeTilesAreConnected(settings, spawn, minePositions);
         this.tiles = buildTiles(settings, minePositions);
         this.player = new Player(spawn);
@@ -170,22 +169,15 @@ public class Minefield {
         }
     }
 
-    private static Set<Position> generateMinePositions(GameSettings settings, Position spawn,
-            Set<Position> protectedPositions) {
+    private static Set<Position> generateMinePositions(GameSettings settings, Set<Position> protectedPositions) {
         int tileCount = settings.getRows() * settings.getColumns();
         int mineCount = Math.max(1, tileCount * settings.getMinePercentage() / 100);
         mineCount = Math.min(mineCount, tileCount - protectedPositions.size());
         int safeTileCount = tileCount - mineCount;
         Random random = new Random();
 
-        for (int attempt = 0; attempt < 5000; attempt++) {
-            Set<Position> minePositions = randomMinePositions(settings, protectedPositions, mineCount, random);
-            if (countReachableSafeTiles(settings, spawn, minePositions) == safeTileCount) {
-                return minePositions;
-            }
-        }
-
-        return connectedFallbackMinePositions(settings, spawn, safeTileCount, protectedPositions, random);
+        Set<Position> safePositions = generateConnectedSafePositions(settings, protectedPositions, safeTileCount, random);
+        return minePositionsFromSafeTiles(settings, safePositions);
     }
 
     private static void validateSafeTilesAreConnected(GameSettings settings, Position spawn, Set<Position> minePositions) {
@@ -195,22 +187,6 @@ public class Minefield {
         if (reachableSafeTileCount != safeTileCount) {
             throw new IllegalStateException("Generated minefield has unreachable safe tiles.");
         }
-    }
-
-    private static Set<Position> randomMinePositions(GameSettings settings, Set<Position> protectedPositions, int mineCount,
-            Random random) {
-        List<Position> candidates = new ArrayList<>();
-        for (int row = 0; row < settings.getRows(); row++) {
-            for (int column = 0; column < settings.getColumns(); column++) {
-                Position position = new Position(column, row);
-                if (!protectedPositions.contains(position)) {
-                    candidates.add(position);
-                }
-            }
-        }
-
-        Collections.shuffle(candidates, random);
-        return new HashSet<>(candidates.subList(0, mineCount));
     }
 
     private static int countReachableSafeTiles(GameSettings settings, Position spawn, Set<Position> minePositions) {
@@ -233,30 +209,76 @@ public class Minefield {
         return visited.size();
     }
 
-    private static Set<Position> connectedFallbackMinePositions(GameSettings settings, Position spawn, int safeTileCount,
-            Set<Position> protectedPositions, Random random) {
+    private static Set<Position> generateConnectedSafePositions(GameSettings settings, Set<Position> protectedPositions,
+            int safeTileCount, Random random) {
         Set<Position> safePositions = new HashSet<>(protectedPositions);
         List<Position> frontier = new ArrayList<>();
-        frontier.addAll(protectedPositions);
+        Set<Position> frontierSet = new HashSet<>();
 
-        while (safePositions.size() < safeTileCount && !frontier.isEmpty()) {
-            Position current = frontier.get(random.nextInt(frontier.size()));
-            List<Position> candidates = new ArrayList<>();
-            for (Direction direction : Direction.values()) {
-                Position neighbor = current.move(direction);
-                if (contains(settings, neighbor) && !safePositions.contains(neighbor)) {
-                    candidates.add(neighbor);
-                }
-            }
-            if (candidates.isEmpty()) {
-                frontier.remove(current);
-            } else {
-                Position next = candidates.get(random.nextInt(candidates.size()));
-                safePositions.add(next);
-                frontier.add(next);
-            }
+        for (Position position : safePositions) {
+            addFrontierNeighbors(settings, position, safePositions, frontier, frontierSet);
         }
 
+        while (safePositions.size() < safeTileCount) {
+            if (frontier.isEmpty()) {
+                throw new IllegalStateException("Could not expand connected safe tiles.");
+            }
+
+            int index = chooseFrontierIndex(settings, safePositions, frontier, random);
+            Position next = frontier.remove(index);
+            frontierSet.remove(next);
+            if (!safePositions.add(next)) {
+                continue;
+            }
+            addFrontierNeighbors(settings, next, safePositions, frontier, frontierSet);
+        }
+
+        return safePositions;
+    }
+
+    private static void addFrontierNeighbors(GameSettings settings, Position position, Set<Position> safePositions,
+            List<Position> frontier, Set<Position> frontierSet) {
+        for (Direction direction : Direction.values()) {
+            Position neighbor = position.move(direction);
+            if (contains(settings, neighbor) && !safePositions.contains(neighbor) && frontierSet.add(neighbor)) {
+                frontier.add(neighbor);
+            }
+        }
+    }
+
+    private static int chooseFrontierIndex(GameSettings settings, Set<Position> safePositions, List<Position> frontier,
+            Random random) {
+        int totalWeight = 0;
+        int[] weights = new int[frontier.size()];
+        for (int index = 0; index < frontier.size(); index++) {
+            int adjacentSafeTiles = countAdjacentSafeTiles(settings, safePositions, frontier.get(index));
+            int weight = 1 + Math.max(0, 4 - adjacentSafeTiles) * 2;
+            weights[index] = weight;
+            totalWeight += weight;
+        }
+
+        int roll = random.nextInt(totalWeight);
+        for (int index = 0; index < weights.length; index++) {
+            roll -= weights[index];
+            if (roll < 0) {
+                return index;
+            }
+        }
+        return frontier.size() - 1;
+    }
+
+    private static int countAdjacentSafeTiles(GameSettings settings, Set<Position> safePositions, Position position) {
+        int count = 0;
+        for (Direction direction : Direction.values()) {
+            Position neighbor = position.move(direction);
+            if (contains(settings, neighbor) && safePositions.contains(neighbor)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private static Set<Position> minePositionsFromSafeTiles(GameSettings settings, Set<Position> safePositions) {
         Set<Position> minePositions = new HashSet<>();
         for (int row = 0; row < settings.getRows(); row++) {
             for (int column = 0; column < settings.getColumns(); column++) {
