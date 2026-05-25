@@ -13,8 +13,8 @@ import minewalker.persistence.GameStorage;
 public class MenuPanel extends JPanel {
     private static final long serialVersionUID = 1L;
 
-    public MenuPanel(Runnable playSettings, Runnable settings, Runnable guide, GameStorage storage,
-            MusicManager musicManager) {
+public MenuPanel(Runnable playSettings, Runnable settings, Runnable guide, Runnable quit,
+        GameStorage storage, MusicManager musicManager) {
         setLayout(new BorderLayout(20, 20));
         setBackground(ScreenStyles.BLACK);
         setBorder(ScreenStyles.pageBorder());
@@ -29,6 +29,7 @@ public class MenuPanel extends JPanel {
         JButton play = ScreenStyles.button("PLAY");
         JButton settingsButton = ScreenStyles.button("SETTINGS");
         JButton guideButton = ScreenStyles.button("GUIDE");
+        JButton quitButton = ScreenStyles.button("QUIT");
 
         Runnable playAction = () -> {
             musicManager.playEffect("select");
@@ -42,19 +43,26 @@ public class MenuPanel extends JPanel {
             musicManager.playEffect("select");
             settings.run();
         };
+        Runnable quitAction = () -> {
+            musicManager.playEffect("select");
+            quit.run();
+        };
 
         play.addActionListener(event -> playAction.run());
         settingsButton.addActionListener(event -> settingsAction.run());
         guideButton.addActionListener(event -> guideAction.run());
+        quitButton.addActionListener(event -> quitAction.run());
         actions.add(play);
         actions.add(settingsButton);
         actions.add(guideButton);
+        actions.add(quitButton);
         add(actions, BorderLayout.CENTER);
 
         KeyboardSelector selector = new KeyboardSelector();
         selector.add(new KeyboardItem(play, playAction));
         selector.add(new KeyboardItem(settingsButton, settingsAction));
         selector.add(new KeyboardItem(guideButton, guideAction));
+        selector.add(new KeyboardItem(quitButton, quitAction));
         selector.bindTo(this);
 
         JPanel recent = new JPanel(new GridLayout(0, 1, 4, 4));

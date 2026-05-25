@@ -113,13 +113,13 @@ final class TextureManager {
 
     Image player(Direction dir) {
         switch (dir) {
-            case Direction.RIGHT:
+            case RIGHT:
                 return sprite(PLAYER_RIGHT);
-            case Direction.LEFT:
+            case LEFT:
                 return sprite(PLAYER_LEFT);
-            case Direction.UP:
+            case UP:
                 return sprite(PLAYER_UP);
-            case Direction.DOWN:
+            case DOWN:
                 return sprite(PLAYER_DOWN);
         }
         return sheet;

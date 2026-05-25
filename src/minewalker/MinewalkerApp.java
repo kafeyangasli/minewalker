@@ -2,7 +2,8 @@ package minewalker;
 
 import java.awt.CardLayout;
 import java.awt.Dimension;
-
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
@@ -24,10 +25,10 @@ public class MinewalkerApp {
     private static final String SETTINGS = "settings";
     private static final String GAME = "game";
     private static final String GUIDE = "guide";
-    private static final int DEFAULT_WIDTH = 1080;
-    private static final int DEFAULT_HEIGHT = 720;
-    private static final int MIN_WIDTH = 800;
-    private static final int MIN_HEIGHT = 600;
+    private static final int DEFAULT_WIDTH = 1920;
+    private static final int DEFAULT_HEIGHT = 1080;
+    private static final int MIN_WIDTH = 1000;
+    private static final int MIN_HEIGHT = 720;
 
     private final JFrame frame = new JFrame("Minewalker");
     private final CardLayout cards = new CardLayout();
@@ -41,21 +42,27 @@ public class MinewalkerApp {
         currentSettings = storage.loadSettings().orElseGet(GameSettings::defaultSettings);
         musicManager.applySettings(currentSettings);
 
+        GraphicsDevice device =
+                GraphicsEnvironment.getLocalGraphicsEnvironment()
+                        .getDefaultScreenDevice();
+
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
-        frame.setPreferredSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
-        frame.setLocationByPlatform(true);
+        frame.setUndecorated(true);
         frame.setResizable(false);
 
         root.add(new SplashPanel(this::showMenu, musicManager), SPLASH);
-        root.add(new MenuPanel(this::showConfigureMines, this::showSettings, this::showGuide, storage, musicManager), MENU);
+        root.add(new MenuPanel(this::showConfigureMines, this::showSettings, this::showGuide, this::quitGame, storage, musicManager), MENU);
         root.add(new ConfigureMinesPanel(currentSettings, this::startGame, this::showMenu, musicManager), CONFMINES);
         root.add(new GuidePanel(this::showMenu, musicManager), GUIDE);
         root.add(new SettingsPanel(this::showMenu, storage, musicManager), SETTINGS);
 
         frame.setContentPane(root);
-        frame.pack();
+
+        device.setFullScreenWindow(frame);
+
+        frame.validate();
         frame.setVisible(true);
+
         showSplash();
     }
 
@@ -88,7 +95,9 @@ public class MinewalkerApp {
         musicManager.playSoundtrack("menu");
         cards.show(root, GUIDE);
     }
-
+    public void quitGame() {
+        System.exit(0);
+    }
     private void startGame(GameSettings settings) {
         currentSettings = settings;
         musicManager.applySettings(settings);
@@ -107,7 +116,8 @@ public class MinewalkerApp {
     }
 
     private void refreshMenu() {
-        frame.setTitle("Minewalker");
-        root.add(new MenuPanel(this::showConfigureMines, this::showSettings, this::showGuide, storage, musicManager), MENU);
+        root.add(new MenuPanel(this::showConfigureMines, this::showSettings, this::showGuide,
+        this::quitGame, storage, musicManager), MENU);
+        
     }
 }
